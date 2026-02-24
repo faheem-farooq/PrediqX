@@ -1,4 +1,4 @@
-# 📌 Predictive Customer Intelligence & Modeling Framework
+# 📌 Customer Conversion Propensity Modeling & Campaign Intelligence System
 
 ## 📖 Overview
 
