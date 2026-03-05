@@ -1,6 +1,6 @@
-# 📌 Customer Conversion Propensity Modeling & Campaign Intelligence System
+# Customer Conversion Propensity Modeling & Campaign Intelligence System
 
-## 📖 Overview
+## Overview
 
 This project presents a reusable end-to-end predictive analytics framework designed for structured tabular datasets.
 
@@ -16,7 +16,7 @@ It integrates exploratory data analysis, feature engineering, dimensionality red
 
 ---
 
-## 🎯 Objective
+## Objective
 
 The goal of this framework is to:
 
@@ -29,9 +29,9 @@ This project emphasizes both technical rigor and business interpretability.
 
 ---
 
-## 🔍 Core Components
+## Core Components
 
-### 1️⃣ Exploratory Data Analysis (EDA)
+### Exploratory Data Analysis (EDA)
 
 - Data profiling & distribution analysis  
 - Correlation assessment  
@@ -41,7 +41,7 @@ This project emphasizes both technical rigor and business interpretability.
 
 ---
 
-### 2️⃣ Feature Engineering
+### Feature Engineering
 
 - Categorical encoding  
 - Feature scaling  
@@ -51,7 +51,7 @@ This project emphasizes both technical rigor and business interpretability.
 
 ---
 
-### 3️⃣ Customer Segmentation (Unsupervised Learning)
+### Customer Segmentation (Unsupervised Learning)
 
 - K-Means clustering  
 - PCA-based visualization  
@@ -60,7 +60,7 @@ This project emphasizes both technical rigor and business interpretability.
 
 ---
 
-### 4️⃣ Predictive Modeling (Supervised Learning)
+### Predictive Modeling (Supervised Learning)
 
 Benchmarked classification models:
 
@@ -78,7 +78,7 @@ Evaluation Metrics:
 
 ---
 
-### 5️⃣ Model Explainability
+### Model Explainability
 
 - Feature importance analysis  
 - Coefficient interpretation  
@@ -87,7 +87,7 @@ Evaluation Metrics:
 
 ---
 
-## 🖥 Deployment Layer
+## Deployment Layer
 
 An interactive analytics interface enables:
 
@@ -98,7 +98,7 @@ An interactive analytics interface enables:
 
 ---
 
-## 📈 Business Impact
+## Business Impact
 
 This framework enables organizations to:
 
@@ -109,7 +109,7 @@ This framework enables organizations to:
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - Python  
 - Pandas  
@@ -123,7 +123,7 @@ This framework enables organizations to:
 
 ---
 
-## 📌 Key Takeaways
+## Key Takeaways
 
 - Built a modular, reusable ML pipeline  
 - Integrated supervised and unsupervised learning  
