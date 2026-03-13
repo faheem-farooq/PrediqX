@@ -38,7 +38,14 @@ export const uploadCSV = async (file: File) => {
     });
 
     if (!response.ok) {
-        throw new Error("Failed to upload file");
+        let errorMessage = "Failed to upload file";
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch (e) {
+            errorMessage = await response.text() || errorMessage;
+        }
+        throw new Error(errorMessage);
     }
 
     return response.json();

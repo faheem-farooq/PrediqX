@@ -49,9 +49,9 @@ const UploadPage: React.FC = () => {
 
             // Navigate to Dashboard
             navigate("/dashboard");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Upload failed:", error);
-            alert("Failed to upload file. Please try again.");
+            alert(`Failed to upload file: ${error.message || error}`);
             setIsUploading(false);
         }
     };

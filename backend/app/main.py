@@ -15,11 +15,13 @@ origins = [
     "http://localhost:5174",
     "http://localhost:5175",
     "http://localhost:3000",
+    "https://*.vercel.app",   # Allow Vercel deployments
+    "*"                       # Allow all for now
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], # Since we have generic Vercel wildcards or custom domains, allow all in CORS to avoid blockages
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
