@@ -92,3 +92,95 @@ export const askAnalyst = async (fileId: string, question: string): Promise<{ an
 
     return response.json();
 };
+
+// A/B Testing Types
+export interface ABTestData {
+    group_column: string;
+    metric_column: string;
+    group_a_label: string;
+    group_b_label: string;
+    group_a_size: number;
+    group_b_size: number;
+    group_a_mean: number;
+    group_b_mean: number;
+    test_type: string;
+    statistic: number;
+    p_value: number;
+    significant: boolean;
+    confidence: number;
+    effect_size: number;
+    warnings: string[];
+}
+
+export interface ABTestResponse {
+    success: boolean;
+    data: ABTestData;
+    insight: string;
+}
+
+export interface SuggestedGroup {
+    column: string;
+    unique_values: string[];
+    recommendation: string;
+}
+
+export interface SuggestedMetric {
+    column: string;
+    type: string;
+    suggested_test: string;
+}
+
+export interface SuggestColumnsResponse {
+    success: boolean;
+    suggested_group_columns: SuggestedGroup[];
+    suggested_metric_columns: SuggestedMetric[];
+}
+
+export const runABTest = async (
+    fileId: string,
+    groupColumn: string,
+    metricColumn: string,
+    testType: string = "auto"
+): Promise<ABTestResponse> => {
+    const response = await fetch(`${API_BASE_URL}/experiment/ab-test`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            file_id: fileId,
+            group_column: groupColumn,
+            metric_column: metricColumn,
+            test_type: testType,
+        }),
+    });
+
+    if (!response.ok) {
+        let errorMessage = "Failed to run A/B test";
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch {
+            errorMessage = await response.text() || errorMessage;
+        }
+        throw new Error(errorMessage);
+    }
+
+    return response.json();
+};
+
+export const suggestABTestColumns = async (fileId: string): Promise<SuggestColumnsResponse> => {
+    const response = await fetch(`${API_BASE_URL}/experiment/ab-test/suggest`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ file_id: fileId }),
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to suggest columns");
+    }
+
+    return response.json();
+};

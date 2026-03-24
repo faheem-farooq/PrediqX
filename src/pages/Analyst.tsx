@@ -86,7 +86,7 @@ const Analyst = () => {
                     </div>
 
                     <h1 className="text-7xl font-bold text-slate-900 tracking-tighter mb-8 leading-none">
-                        Executive <span className="text-glow-blue italic">Analysis</span>.
+                        AI <span className="text-glow-blue italic">Analysis</span>.
                     </h1>
 
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-b border-edge pb-16">

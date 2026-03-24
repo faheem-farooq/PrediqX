@@ -25,7 +25,10 @@ const Navbar: React.FC = () => {
                             Upload
                         </Link>
                         <Link to="/analyst" className="text-xs font-bold uppercase tracking-widest text-glow-blue hover:text-glow-violet transition-colors duration-300">
-                            Analyst
+                            AI Analyst
+                        </Link>
+                        <Link to="/ab-test" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors duration-300">
+                            A/B Test
                         </Link>
                         <Link to="/dashboard" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors duration-300">
                             Dashboard
