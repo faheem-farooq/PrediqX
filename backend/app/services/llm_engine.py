@@ -31,7 +31,11 @@ class LLMEngine:
     def generate_chat_response(self, eda_summary: Dict[str, Any], question: str) -> str:
         """
         Generates a concise answer to a follow-up question based on the dataset.
+        This is the core AI generation logic for the "ask about the dataset" feature.
         """
+        
+        # We construct a prompt that provides the LLM with the dataset summary context 
+        # and the user's explicit question, along with strict instructions on tone and formatting.
         prompt = f"""
         You are a senior business data analyst. Use the provided dataset summary to answer the user's question.
         
@@ -48,11 +52,14 @@ class LLMEngine:
         """
         
         try:
+            # Depending on the configured AI provider, we route the request to either Google Gemini or OpenAI
             if self.provider == "google":
+                # Initialize the Gemini model and send the structured prompt
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content(prompt)
                 return response.text.strip()
             elif self.provider == "openai":
+                # Initialize the OpenAI chat completion with the prompt as a user message
                 response = self.client.chat.completions.create(
                     model="gpt-4-turbo-preview",
                     messages=[
@@ -62,6 +69,7 @@ class LLMEngine:
                 )
                 return response.choices[0].message.content.strip()
             else:
+                # If no API key is provided, we return a default static fallback response
                 return "This is a mock response. The Analyst is currently in offline mode (no API keys configured)."
         except Exception as e:
             return f"I apologize, but I encountered an error generating a response: {str(e)}"

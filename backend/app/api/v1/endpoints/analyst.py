@@ -61,13 +61,18 @@ async def generate_analyst_report(request: AnalystReportRequest):
 
 @router.post("/ask", response_model=AskAnalystResponse)
 async def ask_analyst(request: AskAnalystRequest):
+    # This endpoint receives the file ID and the user's question about the dataset.
+    # We construct the path to the original uploaded dataset file.
     file_path = os.path.join(settings.UPLOAD_DIR, f"{request.file_id}.csv")
     
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
     try:
+        # First, we process the dataset to get an Exploratory Data Analysis (EDA) summary (stats, rows, columns, etc)
         eda_summary = data_processor.get_eda_summary(file_path)
+        # Next, we pass this extracted data summary and the user's question to the AI engine (LLM)
+        # The AI generates a conversational response based ONLY on that data summary
         answer = llm_engine.generate_chat_response(eda_summary, request.question)
         return {"answer": answer}
 
