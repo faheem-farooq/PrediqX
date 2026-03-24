@@ -225,4 +225,78 @@ class LLMEngine:
             ]
         }
 
+    def generate_ab_test_insight(self, test_results: Dict[str, Any]) -> str:
+        """
+        Generate a business-friendly interpretation of A/B test results
+        using the configured LLM provider.
+        """
+        prompt = f"""
+        You are a senior business data analyst interpreting the results of an A/B test.
+
+        A/B TEST RESULTS:
+        - Group Column: {test_results.get('group_column')}
+        - Metric Column: {test_results.get('metric_column')}
+        - Group A ("{test_results.get('group_a_label')}"): mean = {test_results.get('group_a_mean')}, n = {test_results.get('group_a_size')}
+        - Group B ("{test_results.get('group_b_label')}"): mean = {test_results.get('group_b_mean')}, n = {test_results.get('group_b_size')}
+        - Test Type: {test_results.get('test_type')}
+        - Test Statistic: {test_results.get('statistic')}
+        - P-Value: {test_results.get('p_value')}
+        - Statistically Significant: {test_results.get('significant')}
+        - Effect Size: {test_results.get('effect_size')}
+        - Warnings: {test_results.get('warnings', [])}
+
+        INSTRUCTIONS:
+        1. Clearly identify which group performed better and by how much.
+        2. Explain the statistical significance in simple business terms.
+        3. Provide a concrete, actionable business recommendation.
+        4. If the result is NOT significant, highlight the risks of acting on inconclusive data.
+        5. If there are warnings (small sample, imbalance), mention their impact.
+        6. Keep the response to 3-5 sentences. Do NOT use markdown formatting.
+        """
+
+        try:
+            if self.provider == "google":
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(prompt)
+                return response.text.strip()
+            elif self.provider == "openai":
+                response = self.client.chat.completions.create(
+                    model="gpt-4-turbo-preview",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful business data analyst specializing in experiment analysis."},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                return response.choices[0].message.content.strip()
+            else:
+                return self._mock_ab_test_insight(test_results)
+        except Exception as e:
+            return f"Unable to generate AI insight: {str(e)}"
+
+    def _mock_ab_test_insight(self, test_results: Dict[str, Any]) -> str:
+        """Fallback mock insight when no LLM API keys are configured."""
+        sig = test_results.get("significant", False)
+        a_label = test_results.get("group_a_label", "A")
+        b_label = test_results.get("group_b_label", "B")
+        a_mean = test_results.get("group_a_mean", 0)
+        b_mean = test_results.get("group_b_mean", 0)
+        p_value = test_results.get("p_value", 1.0)
+        winner = a_label if a_mean > b_mean else b_label
+
+        if sig:
+            return (
+                f"The A/B test shows a statistically significant difference (p={p_value:.4f}). "
+                f"Group '{winner}' outperformed with a mean of {max(a_mean, b_mean):.4f} "
+                f"vs {min(a_mean, b_mean):.4f}. "
+                f"Recommendation: Consider scaling the approach used by group '{winner}' across your operations. "
+                f"The effect size of {test_results.get('effect_size', 0):.4f} suggests a meaningful practical impact."
+            )
+        else:
+            return (
+                f"The A/B test did not find a statistically significant difference (p={p_value:.4f}). "
+                f"While group '{winner}' showed a slightly higher mean ({max(a_mean, b_mean):.4f} vs {min(a_mean, b_mean):.4f}), "
+                f"this difference could be due to random chance. "
+                f"Recommendation: Avoid making business decisions based on this test. Consider collecting more data or running the experiment longer."
+            )
+
 llm_engine = LLMEngine()
