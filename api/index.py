@@ -1,13 +1,11 @@
 import sys
 import os
 
-# Temporary isolation for build debugging
-# sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
+# Add the 'backend' directory to the python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
-from fastapi import FastAPI
-
-app = FastAPI()
+from app.main import app
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "source": "isolated api/index.py"}
+    return {"status": "healthy", "source": "api/index.py"}
