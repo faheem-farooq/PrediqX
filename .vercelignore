@@ -1,0 +1,12 @@
+node_modules
+dist
+venv/
+.venv/
+backend/venv/
+backend/vendor/
+backend/uploads/
+__pycache__/
+.git
+.vscode
+.idea
+*.log
