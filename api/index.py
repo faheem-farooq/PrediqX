@@ -5,3 +5,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
 from app.main import app
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "healthy", "source": "api/index.py"}
