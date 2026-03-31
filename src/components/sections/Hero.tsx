@@ -24,7 +24,7 @@ const Hero: React.FC = () => {
                     transition={{ duration: 1, ease: [0.23, 1, 0.32, 1], delay: 0.2 }}
                     className="text-2xl text-slate-500 mb-16 max-w-3xl mx-auto leading-relaxed font-medium"
                 >
-                    Transform raw datasets into executive strategy with precision. Guided by the principles of calm, autonomous intelligence.
+                    Transform raw datasets into AI strategy with precision. Guided by the principles of calm, autonomous intelligence.
                 </motion.p>
 
                 <motion.div

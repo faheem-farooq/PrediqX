@@ -33,7 +33,7 @@ const Features: React.FC = () => {
                         Architected for Excellence.
                     </h2>
                     <p className="text-2xl text-slate-500 max-w-3xl mx-auto font-medium leading-relaxed">
-                        A suite of high-performance capabilities refined for executive analysis and autonomous discovery.
+                        A suite of high-performance capabilities refined for AI analysis and autonomous discovery.
                     </p>
                 </div>
 

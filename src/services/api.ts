@@ -116,6 +116,8 @@ export interface ABTestResponse {
     success: boolean;
     data: ABTestData;
     insight: string;
+    all_experiments?: ABTestData[];
+    best_test_index?: number;
 }
 
 export interface SuggestedGroup {
@@ -138,9 +140,10 @@ export interface SuggestColumnsResponse {
 
 export const runABTest = async (
     fileId: string,
-    groupColumn: string,
-    metricColumn: string,
-    testType: string = "auto"
+    groupColumn?: string,
+    metricColumn?: string,
+    testType: string = "auto",
+    autoMode: boolean = false
 ): Promise<ABTestResponse> => {
     const response = await fetch(`${API_BASE_URL}/experiment/ab-test`, {
         method: "POST",
@@ -152,6 +155,7 @@ export const runABTest = async (
             group_column: groupColumn,
             metric_column: metricColumn,
             test_type: testType,
+            auto_mode: autoMode,
         }),
     });
 

@@ -4,9 +4,10 @@ from typing import List, Dict, Any, Optional
 
 class ABTestRequest(BaseModel):
     file_id: str
-    group_column: str
-    metric_column: str
-    test_type: str = "auto"  # "auto", "t-test", or "chi-square"
+    group_column: Optional[str] = None
+    metric_column: Optional[str] = None
+    test_type: str = "auto"
+    auto_mode: bool = False
 
 
 class ABTestData(BaseModel):
@@ -31,6 +32,8 @@ class ABTestResponse(BaseModel):
     success: bool
     data: ABTestData
     insight: str
+    all_experiments: Optional[List[ABTestData]] = None
+    best_test_index: Optional[int] = None
 
 
 class SuggestColumnsRequest(BaseModel):

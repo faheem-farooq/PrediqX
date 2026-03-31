@@ -213,11 +213,17 @@ class ABTestingService:
                     "unique_values": [str(v) for v in df[col].dropna().unique().tolist()],
                     "recommendation": "ideal",
                 })
-            elif 2 < nunique <= 5 and df[col].dtype == "object":
+            elif 2 < nunique <= 10:
                 suggested_groups.append({
                     "column": col,
                     "unique_values": [str(v) for v in df[col].dropna().unique().tolist()],
-                    "recommendation": "possible (filter to 2 groups needed)",
+                    "recommendation": "possible (binning/filtering needed)",
+                })
+            elif pd.api.types.is_numeric_dtype(df[col]) and nunique > 10:
+                 suggested_groups.append({
+                    "column": col,
+                    "unique_values": ["Continuous"],
+                    "recommendation": "possible (median split)",
                 })
 
             # Metric columns: numeric or binary
@@ -239,6 +245,84 @@ class ABTestingService:
             "suggested_group_columns": suggested_groups,
             "suggested_metric_columns": suggested_metrics,
         }
+
+    def run_auto_experiments(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """
+        Automatically identify and run the top 3 statistically meaningful A/B tests.
+        """
+        suggestions = self.suggest_columns(df)
+        group_candidates = suggestions["suggested_group_columns"]
+        metric_candidates = suggestions["suggested_metric_columns"]
+
+        experiments = []
+
+        # Avoid columns with too many missing values (> 30%)
+        valid_cols = [col for col in df.columns if df[col].isnull().mean() < 0.3]
+        
+        group_candidates = [g for g in group_candidates if g["column"] in valid_cols]
+        metric_candidates = [m for m in metric_candidates if m["column"] in valid_cols]
+
+        # Prioritize 'ideal' groups first, then others
+        group_candidates.sort(key=lambda x: 0 if x["recommendation"] == "ideal" else 1)
+
+        for g in group_candidates[:5]:  # Check top 5 group candidates
+            for m in metric_candidates[:5]:  # Check top 5 metric candidates
+                if g["column"] == m["column"]:
+                    continue
+                
+                try:
+                    # Prepare the data (handling binning if needed)
+                    temp_df = df[[g["column"], m["column"]]].dropna()
+                    if temp_df.empty:
+                        continue
+
+                    current_group_col = g["column"]
+                    
+                    # Intelligent Preprocessing: Binning
+                    if temp_df[current_group_col].nunique() > 2:
+                        # For numeric, use median split
+                        if pd.api.types.is_numeric_dtype(temp_df[current_group_col]):
+                            median_val = temp_df[current_group_col].median()
+                            col_name = f"{current_group_col}_split"
+                            temp_df[col_name] = temp_df[current_group_col].apply(
+                                lambda x: f"Low (≤{median_val})" if x <= median_val else f"High (>{median_val})"
+                            )
+                            current_group_col = col_name
+                        else:
+                            # For categorical > 2, just take top 2 values and filter
+                            top_2 = temp_df[current_group_col].value_counts().index[:2]
+                            temp_df = temp_df[temp_df[current_group_col].isin(top_2)]
+                    
+                    if temp_df[current_group_col].nunique() != 2:
+                        continue
+
+                    # Run the test
+                    results = self.run_test(
+                        df=temp_df,
+                        group_column=current_group_col,
+                        metric_column=m["column"]
+                    )
+                    
+                    # Store experiment with original group name for UI tracking
+                    results["original_group_column"] = g["column"]
+                    experiments.append(results)
+                    
+                except Exception as e:
+                    print(f"Auto experiment failed for {g['column']} vs {m['column']}: {e}")
+                    continue
+
+        # Ranking logic: Combined score of Significance and Effect Size
+        def score_experiment(exp):
+            # p-value: lower is better (0 to 1) -> (1 to 0)
+            sig_score = (1 - exp["p_value"]) if exp["p_value"] < 0.05 else 0
+            # effect size: higher is better (normalized roughly to 0-1)
+            effect_score = min(exp["effect_size"], 1.0)
+            return (sig_score * 0.7) + (effect_score * 0.3)
+
+        experiments.sort(key=score_experiment, reverse=True)
+        
+        # Limit to top 3
+        return experiments[:3]
 
 
 ab_testing_service = ABTestingService()

@@ -52,7 +52,7 @@ const Analyst = () => {
                         <FileText className="w-16 h-16 text-slate-300 mx-auto mb-10" />
                         <h2 className="text-4xl font-bold text-slate-900 mb-6 tracking-tighter">Access Protocol Required</h2>
                         <p className="text-slate-500 mb-12 text-xl font-medium">
-                            Please provide a dataset for the AI Executive system to perform contextual analysis.
+                            Please provide a dataset for the AI Analyst system to perform contextual analysis.
                         </p>
                         <Button
                             variant="primary"
@@ -74,7 +74,7 @@ const Analyst = () => {
             <Navbar />
 
             <main className="max-w-5xl mx-auto px-10 pt-48 pb-64">
-                {/* Header - Executive Report Style */}
+                {/* Header - AI Report Style */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -141,7 +141,7 @@ const Analyst = () => {
                             />
                         </motion.div>
 
-                        {/* 2. Executive Summary - Clean Typography */}
+                        {/* 2. AI Summary - Clean Typography */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -149,7 +149,7 @@ const Analyst = () => {
                             transition={{ duration: 1 }}
                         >
                             <div className="mb-12 border-b border-edge pb-8 flex items-center justify-between">
-                                <h2 className="text-3xl font-bold text-slate-900 tracking-tighter uppercase">Executive Summary</h2>
+                                <h2 className="text-3xl font-bold text-slate-900 tracking-tighter uppercase">AI Summary</h2>
                                 <FileText className="w-5 h-5 text-slate-300" />
                             </div>
                             <div className="max-w-3xl text-2xl leading-relaxed text-slate-500 font-medium">

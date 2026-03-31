@@ -18,8 +18,7 @@ router = APIRouter()
 async def run_ab_test(request: ABTestRequest):
     """
     Run an A/B test on the uploaded dataset.
-    Automatically selects the appropriate statistical test (t-test or chi-square)
-    based on the metric type, or uses the explicitly specified test_type.
+    If auto_mode is True, it automatically generates and evaluates multiple tests.
     """
     file_path = os.path.join(settings.UPLOAD_DIR, f"{request.file_id}.csv")
 
@@ -29,6 +28,27 @@ async def run_ab_test(request: ABTestRequest):
     try:
         df = pd.read_csv(file_path, skipinitialspace=True, sep=None, engine="python")
         df.columns = df.columns.astype(str).str.strip()
+
+        if request.auto_mode:
+            all_experiments = ab_testing_service.run_auto_experiments(df)
+            if not all_experiments:
+                 raise HTTPException(status_code=400, detail="Could not identify any valid A/B test combinations in this dataset.")
+            
+            # The service returns them ranked, so the first one is the best
+            best_test = all_experiments[0]
+            insight = llm_engine.generate_ab_test_insight(best_test)
+            
+            return {
+                "success": True,
+                "data": best_test,
+                "insight": insight,
+                "all_experiments": all_experiments,
+                "best_test_index": 0
+            }
+
+        # Manual Mode
+        if not request.group_column or not request.metric_column:
+             raise HTTPException(status_code=400, detail="Group and Metric columns are required for manual mode.")
 
         # Run the statistical test
         test_results = ab_testing_service.run_test(

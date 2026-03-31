@@ -16,6 +16,7 @@ const ABTest = () => {
     const [groupColumn, setGroupColumn] = useState('');
     const [metricColumn, setMetricColumn] = useState('');
     const [testType, setTestType] = useState('auto');
+    const [mode, setMode] = useState<'auto' | 'manual'>('auto');
 
     // Results
     const [result, setResult] = useState<ABTestResponse | null>(null);
@@ -57,12 +58,13 @@ const ABTest = () => {
     };
 
     const handleRunTest = async () => {
-        if (!fileId || !groupColumn || !metricColumn) return;
+        if (!fileId) return;
+        if (mode === 'manual' && (!groupColumn || !metricColumn)) return;
         setLoading(true);
         setError(null);
         setResult(null);
         try {
-            const data = await runABTest(fileId, groupColumn, metricColumn, testType);
+            const data = await runABTest(fileId, groupColumn, metricColumn, testType, mode === 'auto');
             setResult(data);
         } catch (err: any) {
             setError(err.message || "Failed to run A/B test. Please try again.");
@@ -72,7 +74,7 @@ const ABTest = () => {
         }
     };
 
-    const canRun = fileId && groupColumn && metricColumn && groupColumn !== metricColumn && !loading;
+    const canRun = fileId && !loading && (mode === 'auto' || (groupColumn && metricColumn && groupColumn !== metricColumn));
 
     // No dataset state
     if (!fileId) {
@@ -137,72 +139,113 @@ const ABTest = () => {
                     transition={{ delay: 0.2 }}
                     className="bg-surface border border-edge rounded-[2rem] p-12 mb-24"
                 >
+                    {/* Mode Toggle */}
+                    <div className="flex justify-center mb-12">
+                        <div className="bg-white border border-edge rounded-full p-2 inline-flex items-center gap-2 relative">
+                            <button
+                                onClick={() => { setMode('auto'); setResult(null); setError(null); }}
+                                className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 relative z-10 ${
+                                    mode === 'auto'
+                                        ? 'bg-black text-white shadow-lg'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                }`}
+                            >
+                                <Brain className="w-4 h-4" />
+                                AI Auto Mode
+                            </button>
+                            <button
+                                onClick={() => { setMode('manual'); setResult(null); setError(null); }}
+                                className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all relative z-10 ${
+                                    mode === 'manual'
+                                        ? 'bg-black text-white shadow-lg'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                }`}
+                            >
+                                Manual Mode
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="mb-10 flex items-center gap-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Experiment Configuration</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            {mode === 'auto' ? 'Automated Configuration' : 'Experiment Configuration'}
+                        </h3>
                         <div className="h-px flex-1 bg-edge" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                        {/* Group Column */}
-                        <div>
-                            <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
-                                Group Column
-                            </label>
-                            <select
-                                value={groupColumn}
-                                onChange={(e) => setGroupColumn(e.target.value)}
-                                disabled={columnsLoading}
-                                className="w-full px-6 py-4 rounded-xl border border-edge bg-white text-slate-900 font-medium text-base focus:outline-none focus:ring-2 focus:ring-glow-blue/20 focus:border-glow-blue transition-all appearance-none cursor-pointer"
-                            >
-                                <option value="">Select group column...</option>
-                                {columns.map((col) => (
-                                    <option key={col} value={col}>{col}</option>
-                                ))}
-                            </select>
-                            <p className="text-[10px] text-slate-400 mt-2 uppercase tracking-wider font-bold">Must have exactly 2 unique values</p>
-                        </div>
+                    {mode === 'manual' ? (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                                {/* Group Column */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                                        Group Column
+                                    </label>
+                                    <select
+                                        value={groupColumn}
+                                        onChange={(e) => setGroupColumn(e.target.value)}
+                                        disabled={columnsLoading}
+                                        className="w-full px-6 py-4 rounded-xl border border-edge bg-white text-slate-900 font-medium text-base focus:outline-none focus:ring-2 focus:ring-glow-blue/20 focus:border-glow-blue transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select group column...</option>
+                                        {columns.map((col) => (
+                                            <option key={col} value={col}>{col}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-[10px] text-slate-400 mt-2 uppercase tracking-wider font-bold">Must have exactly 2 unique values</p>
+                                </div>
 
-                        {/* Metric Column */}
-                        <div>
-                            <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
-                                Metric Column
-                            </label>
-                            <select
-                                value={metricColumn}
-                                onChange={(e) => setMetricColumn(e.target.value)}
-                                disabled={columnsLoading}
-                                className="w-full px-6 py-4 rounded-xl border border-edge bg-white text-slate-900 font-medium text-base focus:outline-none focus:ring-2 focus:ring-glow-blue/20 focus:border-glow-blue transition-all appearance-none cursor-pointer"
-                            >
-                                <option value="">Select metric column...</option>
-                                {columns.map((col) => (
-                                    <option key={col} value={col}>{col}</option>
-                                ))}
-                            </select>
-                            <p className="text-[10px] text-slate-400 mt-2 uppercase tracking-wider font-bold">Numeric or binary column to compare</p>
-                        </div>
-                    </div>
+                                {/* Metric Column */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                                        Metric Column
+                                    </label>
+                                    <select
+                                        value={metricColumn}
+                                        onChange={(e) => setMetricColumn(e.target.value)}
+                                        disabled={columnsLoading}
+                                        className="w-full px-6 py-4 rounded-xl border border-edge bg-white text-slate-900 font-medium text-base focus:outline-none focus:ring-2 focus:ring-glow-blue/20 focus:border-glow-blue transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select metric column...</option>
+                                        {columns.map((col) => (
+                                            <option key={col} value={col}>{col}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-[10px] text-slate-400 mt-2 uppercase tracking-wider font-bold">Numeric or binary column to compare</p>
+                                </div>
+                            </div>
 
-                    {/* Test Type */}
-                    <div className="mb-12">
-                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
-                            Test Type
-                        </label>
-                        <div className="flex gap-4">
-                            {['auto', 't-test', 'chi-square'].map((type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => setTestType(type)}
-                                    className={`px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
-                                        testType === type
-                                            ? 'bg-black text-white shadow-lg'
-                                            : 'bg-white border border-edge text-slate-500 hover:text-slate-900 hover:border-slate-300'
-                                    }`}
-                                >
-                                    {type === 'auto' ? '⚡ Auto' : type === 't-test' ? '📊 T-Test' : '📐 Chi-Square'}
-                                </button>
-                            ))}
+                            {/* Test Type */}
+                            <div className="mb-12">
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                                    Test Type
+                                </label>
+                                <div className="flex gap-4">
+                                    {['auto', 't-test', 'chi-square'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setTestType(type)}
+                                            className={`px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
+                                                testType === type
+                                                    ? 'bg-black text-white shadow-lg'
+                                                    : 'bg-white border border-edge text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            {type === 'auto' ? '⚡ Auto' : type === 't-test' ? '📊 T-Test' : '📐 Chi-Square'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-8 mb-12">
+                            <Brain className="w-12 h-12 text-glow-blue mx-auto mb-4 opacity-50" />
+                            <h4 className="text-xl font-bold text-slate-900 mb-2">Autonomous Experimentation</h4>
+                            <p className="text-slate-500 font-medium max-w-md mx-auto">
+                                PredictX will automatically scan your dataset, identify valid configurations, and run multiple statistical tests to find the best insights.
+                            </p>
                         </div>
-                    </div>
+                    )}
 
                     {/* Run Button */}
                     <Button
@@ -260,135 +303,229 @@ const ABTest = () => {
                 {/* Results */}
                 {result && result.success && (
                     <div className="space-y-24">
-                        {/* Summary Cards */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
-                        >
-                            <div className="mb-12 flex items-center gap-4">
-                                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Experiment Results</h3>
-                                <div className="h-px flex-1 bg-edge" />
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                {/* Winner */}
-                                <div className="bg-surface border border-edge rounded-[1.5rem] p-8 text-center">
-                                    <Trophy className="w-6 h-6 text-yellow-500 mx-auto mb-4" />
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Winner</p>
-                                    <p className="text-2xl font-bold text-slate-900 tracking-tight">
-                                        {result.data.group_a_mean > result.data.group_b_mean
-                                            ? result.data.group_a_label
-                                            : result.data.group_b_label}
-                                    </p>
-                                </div>
-
-                                {/* Improvement */}
-                                <div className="bg-surface border border-edge rounded-[1.5rem] p-8 text-center">
-                                    <TrendingUp className="w-6 h-6 text-green-500 mx-auto mb-4" />
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Improvement</p>
-                                    <p className="text-2xl font-bold text-slate-900 tracking-tight">
-                                        {(() => {
-                                            const minMean = Math.min(result.data.group_a_mean, result.data.group_b_mean);
-                                            const maxMean = Math.max(result.data.group_a_mean, result.data.group_b_mean);
-                                            if (minMean === 0) return 'N/A';
-                                            return `${(((maxMean - minMean) / Math.abs(minMean)) * 100).toFixed(1)}%`;
-                                        })()}
-                                    </p>
-                                </div>
-
-                                {/* Confidence */}
-                                <div className="bg-surface border border-edge rounded-[1.5rem] p-8 text-center">
-                                    <BarChart3 className="w-6 h-6 text-blue-500 mx-auto mb-4" />
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Confidence</p>
-                                    <p className="text-2xl font-bold text-slate-900 tracking-tight">
-                                        {(result.data.confidence * 100).toFixed(2)}%
-                                    </p>
-                                </div>
-
-                                {/* Significant */}
-                                <div className={`border rounded-[1.5rem] p-8 text-center ${
-                                    result.data.significant
-                                        ? 'bg-green-50 border-green-200'
-                                        : 'bg-amber-50 border-amber-200'
-                                }`}>
-                                    <Info className={`w-6 h-6 mx-auto mb-4 ${
-                                        result.data.significant ? 'text-green-500' : 'text-amber-500'
-                                    }`} />
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Significant</p>
-                                    <p className={`text-2xl font-bold tracking-tight ${
-                                        result.data.significant ? 'text-green-700' : 'text-amber-700'
-                                    }`}>
-                                        {result.data.significant ? 'Yes' : 'No'}
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Stats Section */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2, duration: 0.8 }}
-                        >
-                            <div className="mb-12 flex items-center gap-4">
-                                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Statistical Detail</h3>
-                                <div className="h-px flex-1 bg-edge" />
-                            </div>
-
-                            <div className="bg-surface border border-edge rounded-[2rem] overflow-hidden">
-                                <table className="w-full">
-                                    <tbody className="divide-y divide-edge">
-                                        <tr>
-                                            <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Group A ({result.data.group_a_label})</td>
-                                            <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">Mean: {result.data.group_a_mean} <span className="text-slate-400 text-sm font-medium">· n={result.data.group_a_size}</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Group B ({result.data.group_b_label})</td>
-                                            <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">Mean: {result.data.group_b_mean} <span className="text-slate-400 text-sm font-medium">· n={result.data.group_b_size}</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Test Type</td>
-                                            <td className="px-8 py-5 text-right text-lg font-bold text-slate-900 capitalize">{result.data.test_type}</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">P-Value</td>
-                                            <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">{result.data.p_value.toFixed(6)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Effect Size</td>
-                                            <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">{result.data.effect_size}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </motion.div>
-
-                        {/* Warnings */}
-                        {result.data.warnings.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                            >
-                                <div className="bg-amber-50 border border-amber-200 rounded-[2rem] p-8">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <AlertTriangle className="w-5 h-5 text-amber-500" />
-                                        <h4 className="text-xs font-bold uppercase tracking-widest text-amber-600">Warnings</h4>
+                        {mode === 'auto' && result.all_experiments && result.all_experiments.length > 0 ? (
+                            <>
+                                {/* Section 1: Top Insight */}
+                                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+                                    <div className="mb-12 flex items-center gap-4">
+                                        <Trophy className="w-5 h-5 text-yellow-500" />
+                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Section 1: Top Insight (AI Selected)</h3>
+                                        <div className="h-px flex-1 bg-edge" />
                                     </div>
-                                    <ul className="space-y-3">
-                                        {result.data.warnings.map((w, idx) => (
-                                            <li key={idx} className="text-base text-amber-800 font-medium pl-8 relative">
-                                                <div className="absolute left-0 top-2.5 w-1.5 h-1.5 bg-amber-400 rounded-full" />
-                                                {w}
-                                            </li>
+                                    
+                                    <div className="bg-surface border-2 border-slate-900 rounded-[2rem] p-10 mb-8 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest px-6 py-2 rounded-bl-2xl">
+                                            Highest Significance
+                                        </div>
+                                        <div className="flex items-center gap-4 mb-6 pt-2">
+                                            <span className="px-4 py-2 bg-slate-100 rounded-full text-xs font-bold text-slate-600 border border-slate-200">
+                                                {result.data.group_column} vs {result.data.metric_column}
+                                            </span>
+                                            {result.data.significant && (
+                                                <span className="px-4 py-2 bg-green-50 text-green-700 rounded-full text-xs font-bold flex items-center gap-2 border border-green-200">
+                                                    <Info className="w-3 h-3" /> Statistically Significant
+                                                </span>
+                                            )}
+                                        </div>
+                                        <h4 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">
+                                            Group <span className="text-glow-blue">'{result.data.group_a_mean > result.data.group_b_mean ? result.data.group_a_label : result.data.group_b_label}'</span> outperformed by {
+                                                (() => {
+                                                    const min = Math.min(result.data.group_a_mean, result.data.group_b_mean);
+                                                    const max = Math.max(result.data.group_a_mean, result.data.group_b_mean);
+                                                    if (min === 0) return 'N/A';
+                                                    return `${(((max - min) / Math.abs(min)) * 100).toFixed(1)}%`;
+                                                })()
+                                            }
+                                        </h4>
+                                        <p className="text-slate-500 font-medium flex items-center gap-6">
+                                            <span>P-Value: <strong className="text-slate-900">{result.data.p_value.toFixed(6)}</strong></span>
+                                            <span>Effect Size: <strong className="text-slate-900">{result.data.effect_size.toFixed(4)}</strong></span>
+                                        </p>
+                                    </div>
+                                </motion.div>
+
+                                {/* Section 2: All Tested Experiments */}
+                                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}>
+                                    <div className="mb-12 flex items-center gap-4">
+                                        <FlaskConical className="w-5 h-5 text-slate-400" />
+                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Section 2: All Tested Experiments</h3>
+                                        <div className="h-px flex-1 bg-edge" />
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {result.all_experiments.map((exp: any, idx: number) => (
+                                            <div key={idx} className={`bg-surface border ${idx === 0 ? 'border-slate-900 shadow-md' : 'border-edge'} rounded-[1.5rem] p-8 relative`}>
+                                                {idx === 0 && (
+                                                    <div className="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+                                                        Best
+                                                    </div>
+                                                )}
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 flex justify-between items-center">
+                                                    Config {idx + 1}
+                                                    {exp.significant && <span className="w-2 h-2 rounded-full bg-green-500" title="Significant"></span>}
+                                                </p>
+                                                <h4 className="font-bold text-slate-900 text-lg mb-1 truncate" title={exp.group_column}>{exp.group_column}</h4>
+                                                <p className="text-sm font-medium text-slate-500 mb-6 truncate" title={exp.metric_column}>vs {exp.metric_column}</p>
+                                                
+                                                <div className="space-y-3 text-sm">
+                                                    <div className="flex justify-between items-center border-b border-edge pb-2">
+                                                        <span className="text-slate-500">Test Type</span>
+                                                        <span className="font-bold text-slate-900 capitalize">{exp.test_type}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center border-b border-edge pb-2">
+                                                        <span className="text-slate-500">P-Value</span>
+                                                        <span className="font-bold text-slate-900">{exp.p_value.toFixed(4)}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-slate-500">Difference</span>
+                                                        <span className="font-bold text-slate-900">
+                                                            {(() => {
+                                                                const minM = Math.min(exp.group_a_mean, exp.group_b_mean);
+                                                                const maxM = Math.max(exp.group_a_mean, exp.group_b_mean);
+                                                                if (minM === 0) return 'N/A';
+                                                                return `+${(((maxM - minM) / Math.abs(minM)) * 100).toFixed(1)}%`;
+                                                            })()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         ))}
-                                    </ul>
-                                </div>
-                            </motion.div>
+                                    </div>
+                                </motion.div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Summary Cards bg-surface */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.8 }}
+                                >
+                                    <div className="mb-12 flex items-center gap-4">
+                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Experiment Results</h3>
+                                        <div className="h-px flex-1 bg-edge" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                        {/* Winner */}
+                                        <div className="bg-surface border border-edge rounded-[1.5rem] p-8 text-center">
+                                            <Trophy className="w-6 h-6 text-yellow-500 mx-auto mb-4" />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Winner</p>
+                                            <p className="text-2xl font-bold text-slate-900 tracking-tight">
+                                                {result.data.group_a_mean > result.data.group_b_mean
+                                                    ? result.data.group_a_label
+                                                    : result.data.group_b_label}
+                                            </p>
+                                        </div>
+
+                                        {/* Improvement */}
+                                        <div className="bg-surface border border-edge rounded-[1.5rem] p-8 text-center">
+                                            <TrendingUp className="w-6 h-6 text-green-500 mx-auto mb-4" />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Improvement</p>
+                                            <p className="text-2xl font-bold text-slate-900 tracking-tight">
+                                                {(() => {
+                                                    const minMean = Math.min(result.data.group_a_mean, result.data.group_b_mean);
+                                                    const maxMean = Math.max(result.data.group_a_mean, result.data.group_b_mean);
+                                                    if (minMean === 0) return 'N/A';
+                                                    return `${(((maxMean - minMean) / Math.abs(minMean)) * 100).toFixed(1)}%`;
+                                                })()}
+                                            </p>
+                                        </div>
+
+                                        {/* Confidence */}
+                                        <div className="bg-surface border border-edge rounded-[1.5rem] p-8 text-center">
+                                            <BarChart3 className="w-6 h-6 text-blue-500 mx-auto mb-4" />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Confidence</p>
+                                            <p className="text-2xl font-bold text-slate-900 tracking-tight">
+                                                {(result.data.confidence * 100).toFixed(2)}%
+                                            </p>
+                                        </div>
+
+                                        {/* Significant */}
+                                        <div className={`border rounded-[1.5rem] p-8 text-center ${
+                                            result.data.significant
+                                                ? 'bg-green-50 border-green-200'
+                                                : 'bg-amber-50 border-amber-200'
+                                        }`}>
+                                            <Info className={`w-6 h-6 mx-auto mb-4 ${
+                                                result.data.significant ? 'text-green-500' : 'text-amber-500'
+                                            }`} />
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Significant</p>
+                                            <p className={`text-2xl font-bold tracking-tight ${
+                                                result.data.significant ? 'text-green-700' : 'text-amber-700'
+                                            }`}>
+                                                {result.data.significant ? 'Yes' : 'No'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                {/* Stats Section */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2, duration: 0.8 }}
+                                >
+                                    <div className="mb-12 flex items-center gap-4">
+                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Statistical Detail</h3>
+                                        <div className="h-px flex-1 bg-edge" />
+                                    </div>
+
+                                    <div className="bg-surface border border-edge rounded-[2rem] overflow-hidden">
+                                        <table className="w-full">
+                                            <tbody className="divide-y divide-edge">
+                                                <tr>
+                                                    <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Group A ({result.data.group_a_label})</td>
+                                                    <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">Mean: {result.data.group_a_mean} <span className="text-slate-400 text-sm font-medium">· n={result.data.group_a_size}</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Group B ({result.data.group_b_label})</td>
+                                                    <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">Mean: {result.data.group_b_mean} <span className="text-slate-400 text-sm font-medium">· n={result.data.group_b_size}</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Test Type</td>
+                                                    <td className="px-8 py-5 text-right text-lg font-bold text-slate-900 capitalize">{result.data.test_type}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">P-Value</td>
+                                                    <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">{result.data.p_value.toFixed(6)}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-400">Effect Size</td>
+                                                    <td className="px-8 py-5 text-right text-lg font-bold text-slate-900">{result.data.effect_size}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </motion.div>
+
+                                {/* Warnings */}
+                                {result.data.warnings.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                    >
+                                        <div className="bg-amber-50 border border-amber-200 rounded-[2rem] p-8">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                                                <h4 className="text-xs font-bold uppercase tracking-widest text-amber-600">Warnings</h4>
+                                            </div>
+                                            <ul className="space-y-3">
+                                                {result.data.warnings.map((w, idx) => (
+                                                    <li key={idx} className="text-base text-amber-800 font-medium pl-8 relative">
+                                                        <div className="absolute left-0 top-2.5 w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                                                        {w}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </>
                         )}
 
-                        {/* AI Insight */}
+                        {/* Section 3: AI Explanation */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -396,12 +533,12 @@ const ABTest = () => {
                         >
                             <div className="mb-12 flex items-center gap-4">
                                 <Brain className="w-4 h-4 text-glow-blue" />
-                                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">AI Insight</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Section 3: AI Explanation</h3>
                                 <div className="h-px flex-1 bg-edge" />
                             </div>
 
                             <div className="bg-surface border border-edge rounded-[2rem] p-12">
-                                <p className="text-xl leading-relaxed text-slate-600 font-medium">
+                                <p className="text-xl leading-relaxed text-slate-600 font-medium whitespace-pre-line">
                                     {result.insight}
                                 </p>
                             </div>
