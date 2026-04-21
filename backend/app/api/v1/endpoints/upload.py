@@ -16,6 +16,7 @@ async def upload_file(file: UploadFile = File(...)):
     file_id = str(uuid.uuid4())
     file_path = os.path.join(settings.UPLOAD_DIR, f"{file_id}.csv")
 
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     try:
         # Save file
         with open(file_path, "wb") as buffer:
