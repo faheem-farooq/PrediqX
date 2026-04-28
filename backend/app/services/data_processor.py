@@ -29,10 +29,8 @@ class DataProcessor:
         Auto-detects delimiter (comma, semicolon, tab, etc.)
         """
         try:
-            # Ensure we decode bytes to string to inspect content, removing potential BOM
-            content_str = file_content.decode('utf-8-sig')
             # Let pandas auto-detect delimiter using Python engine
-            df = pd.read_csv(io.StringIO(content_str), skipinitialspace=True, sep=None, engine='python')
+            df = pd.read_csv(io.BytesIO(file_content), skipinitialspace=True, sep=None, engine='python')
             
             # Clean column names
             df.columns = df.columns.astype(str).str.strip()

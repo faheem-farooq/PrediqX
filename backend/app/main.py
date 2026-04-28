@@ -15,12 +15,12 @@ origins = [
     "http://localhost:5174",
     "http://localhost:5175",
     "http://localhost:3000",
-    "https://*.vercel.app"    # Allow Vercel deployments
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins, # Fixed: Cannot use allow_origins=["*"] with allow_credentials=True
+    allow_origin_regex=r"https://.*\.vercel\.app", # Allow Vercel deployments properly
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

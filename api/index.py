@@ -86,8 +86,7 @@ async def upload_csv(file: UploadFile = File(...)):
     content = await file.read()
 
     try:
-        content_str = content.decode("utf-8-sig")
-        df = pd.read_csv(io.StringIO(content_str), skipinitialspace=True, sep=None, engine="python")
+        df = pd.read_csv(io.BytesIO(content), skipinitialspace=True, sep=None, engine="python")
         df.columns = df.columns.astype(str).str.strip()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading CSV: {str(e)}")
