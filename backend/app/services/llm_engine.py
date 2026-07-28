@@ -55,7 +55,7 @@ class LLMEngine:
             # Depending on the configured AI provider, we route the request to either Google Gemini or OpenAI
             if self.provider == "google":
                 # Initialize the Gemini model and send the structured prompt
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 response = model.generate_content(prompt)
                 return response.text.strip()
             elif self.provider == "openai":
@@ -133,7 +133,7 @@ class LLMEngine:
 
     def _generate_google(self, eda_summary: Dict[str, Any]) -> Dict[str, Any]:
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             prompt = self._construct_prompt(eda_summary)
             response = model.generate_content(prompt)
             return self._parse_json(response.text)
@@ -256,7 +256,7 @@ class LLMEngine:
 
         try:
             if self.provider == "google":
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 response = model.generate_content(prompt)
                 return response.text.strip()
             elif self.provider == "openai":
